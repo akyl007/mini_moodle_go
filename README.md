@@ -1,4 +1,4 @@
-# mini_moodle_go
+# Mini_moodle_go
 
 
 **Main view of web-application**

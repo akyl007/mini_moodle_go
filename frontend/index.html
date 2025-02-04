@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini Moodle</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+<header>
+    <div class="header-left">
+        <div class="menu-toggle" onclick="toggleSidebar()">☰</div>
+        <div class="logo">Mini Moodle</div>
+    </div>
+    <nav class="header-nav">
+        <ul>
+            <li><a href="#">Главная</a></li>
+            <li><a href="#">Профиль</a></li>
+            <li><a href="#">Выход</a></li>
+        </ul>
+    </nav>
+</header>
+
+<div class="sidebar" id="sidebar">
+    <h2>Навигация</h2>
+    <ul>
+        <li><a href="#">Все уроки</a></li>
+        <li><a href="#">Все учителя</a></li>
+        <li><a href="#">Все студенты</a></li>
+    </ul>
+</div>
+
+<div class="main-content">
+    <h1>Список уроков</h1>
+    <div id="lessons-container"></div>
+</div>
+<div id="assignTeacherModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeAssignTeacherModal()">&times;</span>
+        <h2>Назначить преподавателя</h2>
+        <label for="teacherSelect">Выберите преподавателя:</label>
+        <select id="teacherSelect"></select>
+        <button class="assign-btn" onclick="assignTeacher()">Назначить</button>
+    </div>
+</div>
+<div id="assignStudentModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeAssignStudentModal()">&times;</span>
+        <h2>Назначить студентов</h2>
+        <label for="studentSelect">Выберите студентов:</label>
+        <select id="studentSelect" multiple></select>
+        <button class="assign-btn" onclick="assignStudents()">Назначить</button>
+    </div>
+</div>
+
+
+<script src="main.js"></script>
+</body>
+</html>

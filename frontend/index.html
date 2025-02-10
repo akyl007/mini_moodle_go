@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mini Moodle</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="./react_frontend/src/styles.css">
 </head>
 <body>
 
@@ -17,7 +17,7 @@
     </div>
     <nav class="header-nav">
         <ul>
-            <li><a href="#">Главная</a></li>
+            <li><a href="index.html">Главная</a></li>
             <li><a href="#">Профиль</a></li>
             <li><a href="#">Выход</a></li>
         </ul>
@@ -27,7 +27,7 @@
 <div class="sidebar" id="sidebar">
     <h2>Навигация</h2>
     <ul>
-        <li><a href="#">Все уроки</a></li>
+        <li><a href="index.html">Все уроки</a></li>
         <li><a href="#">Все учителя</a></li>
         <li><a href="#">Все студенты</a></li>
     </ul>
@@ -37,6 +37,7 @@
     <h1>Список уроков</h1>
     <div id="lessons-container"></div>
 </div>
+
 <div id="assignTeacherModal" class="modal">
     <div class="modal-content">
         <span class="close" onclick="closeAssignTeacherModal()">&times;</span>
@@ -46,6 +47,7 @@
         <button class="assign-btn" onclick="assignTeacher()">Назначить</button>
     </div>
 </div>
+
 <div id="assignStudentModal" class="modal">
     <div class="modal-content">
         <span class="close" onclick="closeAssignStudentModal()">&times;</span>
@@ -55,7 +57,6 @@
         <button class="assign-btn" onclick="assignStudents()">Назначить</button>
     </div>
 </div>
-
 
 <script src="main.js"></script>
 </body>

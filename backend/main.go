@@ -3,29 +3,39 @@ package main
 import (
 	"fmt"
 	"log"
+	"mini_moodle/backend/config"
 	"mini_moodle/backend/db"
 	"mini_moodle/backend/routes"
 	"net/http"
+	"os"
+	"path/filepath"
+	"time"
 )
 
 func main() {
-	db.Connect()
-	router := routes.SetupRouter()
+	cfg := config.Load()
+	db.Connect(cfg)
 
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, DELETE")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-		if r.Method == "OPTIONS" {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		router.ServeHTTP(w, r)
-	})
+	// Выводим рабочую директорию для отладки
+	wd, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("Working directory: %s", wd)
 
-	fs := http.FileServer(http.Dir("./frontend"))
-	http.Handle("/", fs)
+	// Собираем абсолютный путь к сборке React
+	staticPath := filepath.Join(wd, "frontend", "react-frontend", "build")
+	log.Printf("Serving static files from: %s", staticPath)
+
+	router := routes.SetupRouter(staticPath)
+
+	server := &http.Server{
+		Addr:         ":8080",
+		Handler:      router,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+	}
 
 	fmt.Println("Server running on http://localhost:8080")
-	log.Fatal(http.ListenAndServe(":8080", handler))
+	log.Fatal(server.ListenAndServe())
 }

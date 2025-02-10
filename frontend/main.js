@@ -148,4 +148,3 @@ function assignStudents() {
         })
         .catch(error => console.error("Ошибка назначения студентов:", error));
 }
-

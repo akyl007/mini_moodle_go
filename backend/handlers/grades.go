@@ -26,24 +26,19 @@ func AssignGrade(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result, err := db.DB.Exec(`
-		UPDATE lesson_students 
+		UPDATE lesson_attendance 
 		SET grade = $1 
-		WHERE lesson_id = $2 AND student_id = $3
-	`, req.Grade, req.LessonID, req.StudentID)
+		WHERE lesson_id = $2 AND student_id = $3`,
+		req.Grade, req.LessonID, req.StudentID)
 
 	if err != nil {
 		http.Error(w, "Error assigning grade", http.StatusInternalServerError)
 		return
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		http.Error(w, "Error getting result", http.StatusInternalServerError)
-		return
-	}
-
+	rowsAffected, _ := result.RowsAffected()
 	if rowsAffected == 0 {
-		http.Error(w, "Student not assigned to this lesson", http.StatusNotFound)
+		http.Error(w, "Student not found in this lesson", http.StatusNotFound)
 		return
 	}
 

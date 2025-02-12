@@ -119,30 +119,6 @@ func GetLesson(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(lesson)
 }
 
-type AssignStudentsRequest struct {
-	LessonID   int   `json:"lesson_id"`
-	StudentIDs []int `json:"student_ids"`
-}
-
-func AssignStudents(w http.ResponseWriter, r *http.Request) {
-	var req AssignStudentsRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request", http.StatusBadRequest)
-		return
-	}
-
-	for _, studentID := range req.StudentIDs {
-		_, err := db.DB.Exec("INSERT INTO lesson_students (lesson_id, student_id) VALUES ($1, $2)", req.LessonID, studentID)
-		if err != nil {
-			http.Error(w, "Ошибка назначения студента", http.StatusInternalServerError)
-			return
-		}
-	}
-
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"message": "Students assigned successfully"})
-}
-
 // GetLessonWithStudents возвращает информацию об уроке со списком студентов
 func GetLessonWithStudents(w http.ResponseWriter, r *http.Request) {
 	idStr := r.URL.Query().Get("id")
@@ -192,10 +168,14 @@ func GetLessonWithStudents(w http.ResponseWriter, r *http.Request) {
 
 	// Получаем список назначенных студентов
 	rows, err := db.DB.Query(`
-		SELECT u.id, u.username, ls.grade
+		SELECT 
+			u.id, 
+			u.username, 
+			la.grade,
+			COALESCE(la.attendance, false) as attendance
 		FROM users u
-		JOIN lesson_students ls ON u.id = ls.student_id
-		WHERE ls.lesson_id = $1 AND u.role = 'student'
+		JOIN lesson_attendance la ON u.id = la.student_id
+		WHERE la.lesson_id = $1 AND u.role = 'student'
 	`, id)
 	if err != nil {
 		http.Error(w, "Ошибка получения списка студентов", http.StatusInternalServerError)
@@ -204,9 +184,9 @@ func GetLessonWithStudents(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var student models.StudentAssignment
+		var student models.StudentWithAttendance
 		var grade sql.NullInt64
-		if err := rows.Scan(&student.ID, &student.Username, &grade); err != nil {
+		if err := rows.Scan(&student.ID, &student.Username, &grade, &student.Attendance); err != nil {
 			http.Error(w, "Ошибка обработки данных студента", http.StatusInternalServerError)
 			return
 		}
@@ -214,10 +194,7 @@ func GetLessonWithStudents(w http.ResponseWriter, r *http.Request) {
 			gradeInt := int(grade.Int64)
 			student.Grade = &gradeInt
 		}
-		lesson.Students = append(lesson.Students, models.Student{
-			ID:       student.ID,
-			Username: student.Username,
-		})
+		lesson.Students = append(lesson.Students, student)
 	}
 
 	w.Header().Set("Content-Type", "application/json")

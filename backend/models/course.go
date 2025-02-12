@@ -1,14 +1,13 @@
 package models
 
-type Lesson struct {
+type Course struct {
 	ID          int    `json:"id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
-	CourseID    int    `json:"course_id"`
 	TeacherID   *int   `json:"teacher_id,omitempty"`
 }
 
-type LessonWithTeacher struct {
-	Lesson
+type CourseWithTeacher struct {
+	Course
 	Teacher *Teacher `json:"teacher,omitempty"`
 }

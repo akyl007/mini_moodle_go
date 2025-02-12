@@ -7,6 +7,7 @@ import (
 	"net/http"
 )
 
+// GetStudents возвращает список всех студентов
 func GetStudents(w http.ResponseWriter, r *http.Request) {
 	rows, err := db.DB.Query("SELECT id, username FROM users WHERE role = 'student'")
 	if err != nil {

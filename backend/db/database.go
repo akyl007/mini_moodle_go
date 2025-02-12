@@ -4,24 +4,35 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"mini_moodle/backend/config"
 
 	_ "github.com/lib/pq"
 )
 
 var DB *sql.DB
 
-func Connect() {
+func Connect() error {
+	connStr := fmt.Sprintf(
+		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+		config.AppConfig.Database.Host,
+		config.AppConfig.Database.Port,
+		config.AppConfig.Database.User,
+		config.AppConfig.Database.Password,
+		config.AppConfig.Database.DBName,
+	)
+
+	log.Printf("Connecting to database with: %s", connStr)
+
 	var err error
-	connStr := "user=myuser password=mypassword dbname=minimoodle host=localhost port=5432 sslmode=disable"
 	DB, err = sql.Open("postgres", connStr)
 	if err != nil {
-		log.Fatal("Database connection failed:", err)
+		return fmt.Errorf("error connecting to the database: %v", err)
 	}
 
-	err = DB.Ping()
-	if err != nil {
-		log.Fatal("Database is not responding:", err)
+	if err = DB.Ping(); err != nil {
+		return fmt.Errorf("error pinging the database: %v", err)
 	}
 
-	fmt.Println("Connected to the database")
+	log.Println("Successfully connected to database")
+	return nil
 }

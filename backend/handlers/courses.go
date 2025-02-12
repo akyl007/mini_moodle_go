@@ -8,6 +8,7 @@ import (
 	"mini_moodle/backend/models"
 	"net/http"
 	"strconv"
+	"github.com/gorilla/mux"
 )
 
 // CreateCourse создает новый курс
@@ -291,4 +292,109 @@ func DeleteCourse(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"message": "Course deleted successfully"})
+}
+
+// GetCourse возвращает информацию о конкретном курсе
+func GetCourse(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	courseID := vars["id"]
+
+	// Проверяем, что ID курса предоставлен
+	if courseID == "" {
+		http.Error(w, "Course ID is required", http.StatusBadRequest)
+		return
+	}
+
+	// Получаем информацию о курсе, преподавателе и студентах
+	query := `
+        SELECT 
+            c.id, 
+            c.name, 
+            c.description,
+            c.teacher_id,
+            u.username as teacher_name,
+            COUNT(DISTINCT cs.student_id) as students_count,
+            COUNT(DISTINCT l.id) as lessons_count
+        FROM courses c
+        LEFT JOIN users u ON c.teacher_id = u.id
+        LEFT JOIN course_students cs ON c.id = cs.course_id
+        LEFT JOIN lessons l ON c.id = l.course_id
+        WHERE c.id = $1
+        GROUP BY c.id, c.name, c.description, c.teacher_id, u.username
+    `
+
+	var course struct {
+		models.Course
+		TeacherName   *string `json:"teacher_name,omitempty"`
+		StudentsCount int     `json:"students_count"`
+		LessonsCount  int     `json:"lessons_count"`
+	}
+
+	var teacherName sql.NullString
+	err := db.DB.QueryRow(query, courseID).Scan(
+		&course.ID,
+		&course.Name,
+		&course.Description,
+		&course.TeacherID,
+		&teacherName,
+		&course.StudentsCount,
+		&course.LessonsCount,
+	)
+
+	if err == sql.ErrNoRows {
+		http.Error(w, "Course not found", http.StatusNotFound)
+		return
+	}
+	if err != nil {
+		log.Printf("Error fetching course: %v", err)
+		http.Error(w, "Error fetching course", http.StatusInternalServerError)
+		return
+	}
+
+	if teacherName.Valid {
+		course.TeacherName = &teacherName.String
+	}
+
+	// Получаем список студентов курса
+	studentsQuery := `
+        SELECT u.id, u.username
+        FROM users u
+        JOIN course_students cs ON u.id = cs.student_id
+        WHERE cs.course_id = $1
+    `
+	
+	rows, err := db.DB.Query(studentsQuery, courseID)
+	if err != nil {
+		log.Printf("Error fetching students: %v", err)
+		http.Error(w, "Error fetching course students", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var students []models.Student
+	for rows.Next() {
+		var student models.Student
+		if err := rows.Scan(&student.ID, &student.Username); err != nil {
+			log.Printf("Error scanning student: %v", err)
+			continue
+		}
+		students = append(students, student)
+	}
+
+	response := struct {
+		models.Course
+		TeacherName   *string         `json:"teacher_name,omitempty"`
+		StudentsCount int             `json:"students_count"`
+		LessonsCount  int            `json:"lessons_count"`
+		Students      []models.Student `json:"students,omitempty"`
+	}{
+		Course:        course.Course,
+		TeacherName:   course.TeacherName,
+		StudentsCount: course.StudentsCount,
+		LessonsCount:  course.LessonsCount,
+		Students:      students,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }

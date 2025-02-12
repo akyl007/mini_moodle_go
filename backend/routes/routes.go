@@ -39,6 +39,7 @@ func SetupRouter() *mux.Router {
 	router.HandleFunc("/api/lesson", middleware.AuthMiddleware(handlers.GetLesson)).Methods("GET")
 	router.HandleFunc("/api/progress/student", middleware.AuthMiddleware(handlers.GetStudentProgress)).Methods("GET")
 	router.HandleFunc("/api/progress/course", middleware.TeacherOrAdmin(handlers.GetCourseProgress)).Methods("GET")
+	router.HandleFunc("/api/courses/{id}", handlers.GetCourse).Methods("GET")
 
 	router.Use(mux.CORSMethodMiddleware(router))
 

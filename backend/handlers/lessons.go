@@ -51,12 +51,30 @@ func DeleteLesson(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"message": "Урок успешно удален"})
 }
 
-// GetLessons возвращает список всех уроков
+// GetLessons возвращает список уроков для конкретного курса
 func GetLessons(w http.ResponseWriter, r *http.Request) {
-	rows, err := db.DB.Query("SELECT id, name, description, course_id, teacher_id FROM lessons")
+	courseID := r.URL.Query().Get("course_id")
+	if courseID == "" {
+		http.Error(w, "Course ID is required", http.StatusBadRequest)
+		return
+	}
+
+	// Обновленный запрос без teacher_id
+	query := `
+		SELECT 
+			l.id,
+			l.name,
+			l.description,
+			l.course_id
+		FROM lessons l
+		WHERE l.course_id = $1
+		ORDER BY l.id
+	`
+
+	rows, err := db.DB.Query(query, courseID)
 	if err != nil {
 		log.Printf("Error querying lessons: %v", err)
-		http.Error(w, "Ошибка загрузки уроков", http.StatusInternalServerError)
+		http.Error(w, "Error loading lessons", http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
@@ -64,18 +82,26 @@ func GetLessons(w http.ResponseWriter, r *http.Request) {
 	var lessons []models.Lesson
 	for rows.Next() {
 		var lesson models.Lesson
-		var teacherID sql.NullInt64
-		if err := rows.Scan(&lesson.ID, &lesson.Name, &lesson.Description, &lesson.CourseID, &teacherID); err != nil {
+		err := rows.Scan(
+			&lesson.ID,
+			&lesson.Name,
+			&lesson.Description,
+			&lesson.CourseID,
+		)
+
+		if err != nil {
 			log.Printf("Error scanning lesson: %v", err)
-			http.Error(w, "Ошибка обработки данных", http.StatusInternalServerError)
+			http.Error(w, "Error processing lesson data", http.StatusInternalServerError)
 			return
 		}
-		if teacherID.Valid {
-			tID := int(teacherID.Int64)
-			lesson.TeacherID = &tID
-		}
-		log.Printf("Loaded lesson: %+v", lesson)
+
 		lessons = append(lessons, lesson)
+	}
+
+	if err = rows.Err(); err != nil {
+		log.Printf("Error iterating lessons: %v", err)
+		http.Error(w, "Error processing lessons", http.StatusInternalServerError)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -98,21 +124,46 @@ func GetLesson(w http.ResponseWriter, r *http.Request) {
 
 	var lesson models.Lesson
 	var teacherID sql.NullInt64
+	var teacherUsername sql.NullString
 
-	err = db.DB.QueryRow("SELECT id, name, description, course_id, teacher_id FROM lessons WHERE id = $1", id).
-		Scan(&lesson.ID, &lesson.Name, &lesson.Description, &lesson.CourseID, &teacherID)
+	// Обновляем SQL запрос для правильного получения данных урока
+	err = db.DB.QueryRow(`
+		SELECT 
+			l.id, 
+			l.name, 
+			l.description, 
+			l.course_id,
+			l.teacher_id,
+			u.username as teacher_username
+		FROM lessons l
+		LEFT JOIN users u ON l.teacher_id = u.id AND u.role = 'teacher'
+		WHERE l.id = $1
+	`, id).Scan(
+		&lesson.ID,
+		&lesson.Name,
+		&lesson.Description,
+		&lesson.CourseID,
+		&teacherID,
+		&teacherUsername,
+	)
 
 	if err == sql.ErrNoRows {
 		http.Error(w, "Урок не найден", http.StatusNotFound)
 		return
 	} else if err != nil {
+		log.Printf("Error querying lesson: %v", err)
 		http.Error(w, "Ошибка получения урока", http.StatusInternalServerError)
 		return
 	}
 
-	if teacherID.Valid {
+	// Если у урока есть преподаватель, добавляем его данные
+	if teacherID.Valid && teacherUsername.Valid {
 		tID := int(teacherID.Int64)
 		lesson.TeacherID = &tID
+		lesson.Teacher = &models.Teacher{
+			ID:       tID,
+			Username: teacherUsername.String,
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")

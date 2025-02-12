@@ -13,12 +13,6 @@ type LessonAttendance struct {
 	Grade      *int `json:"grade,omitempty"`
 }
 
-type LessonWithStudents struct {
-	Lesson
-	Students []StudentWithAttendance `json:"students"`
-	Teacher  *Teacher               `json:"teacher,omitempty"`
-}
-
 type StudentWithAttendance struct {
 	ID         int    `json:"id"`
 	Username   string `json:"username"`

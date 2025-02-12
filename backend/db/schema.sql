@@ -29,6 +29,7 @@ CREATE TABLE lessons (
     course_id INTEGER REFERENCES courses(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     description TEXT,
+    teacher_id INTEGER REFERENCES users(id),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -46,4 +47,7 @@ CREATE INDEX idx_lesson_attendance_student_id ON lesson_attendance(student_id);
 CREATE INDEX idx_lesson_attendance_lesson_id ON lesson_attendance(lesson_id);
 CREATE INDEX idx_lessons_course_id ON lessons(course_id);
 CREATE INDEX idx_course_students_student_id ON course_students(student_id);
-CREATE INDEX idx_course_students_course_id ON course_students(course_id); 
+CREATE INDEX idx_course_students_course_id ON course_students(course_id);
+
+-- Добавляем индекс для оптимизации запросов с teacher_id
+CREATE INDEX idx_lessons_teacher_id ON lessons(teacher_id); 

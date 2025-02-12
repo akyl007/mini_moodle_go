@@ -3,6 +3,11 @@ package models
 type User struct {
 	ID       int    `json:"id"`
 	Username string `json:"username"`
-	Password string `json:"password"`
-	Role     string `json:"role"`
+	Password string `json:"password,omitempty"`
+	Role     string `json:"role"` // admin, teacher, student
+}
+
+type Role struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
 }

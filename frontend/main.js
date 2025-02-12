@@ -51,7 +51,6 @@ function fetchLessons() {
 }
 
 
-
 function deleteLesson(id) {
     fetch(`http://localhost:8080/api/lesson/delete?id=${id}`, { method: "DELETE" })
         .then(response => response.text())

@@ -7,35 +7,39 @@ import (
 	"mini_moodle/backend/db"
 	"mini_moodle/backend/routes"
 	"net/http"
-	"os"
-	"path/filepath"
-	"time"
 )
 
 func main() {
-	cfg := config.Load()
-	db.Connect(cfg)
-
-	// Выводим рабочую директорию для отладки
-	wd, err := os.Getwd()
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Printf("Working directory: %s", wd)
-
-	// Собираем абсолютный путь к сборке React
-	staticPath := filepath.Join(wd, "frontend", "react-frontend", "build")
-	log.Printf("Serving static files from: %s", staticPath)
-
-	router := routes.SetupRouter(staticPath)
-
-	server := &http.Server{
-		Addr:         ":8080",
-		Handler:      router,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 10 * time.Second,
+	// Загружаем конфигурацию
+	if err := config.LoadConfig("config/config.json"); err != nil {
+		log.Fatal("Cannot load config:", err)
 	}
 
-	fmt.Println("Server running on http://localhost:8080")
-	log.Fatal(server.ListenAndServe())
+	// Подключаемся к базе данных
+	if err := db.Connect(); err != nil {
+		log.Fatal("Cannot connect to database:", err)
+	}
+	defer db.DB.Close()
+
+	// Настраиваем маршрутизацию
+	router := routes.SetupRouter()
+
+	// Настраиваем CORS
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		router.ServeHTTP(w, r)
+	})
+
+	// Запускаем сервер
+	serverAddr := fmt.Sprintf(":%d", config.AppConfig.Server.Port)
+	log.Printf("Server starting on http://localhost%s", serverAddr)
+	log.Fatal(http.ListenAndServe(serverAddr, handler))
 }

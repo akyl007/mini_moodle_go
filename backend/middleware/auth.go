@@ -1,54 +1,62 @@
 package middleware
 
 import (
-	"context"
-	"github.com/dgrijalva/jwt-go"
+	"log"
+	"mini_moodle/backend/utils"
 	"net/http"
 	"strings"
 )
 
-type contextKey string
-
-const userContextKey = contextKey("user")
-
-func AuthMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
+			log.Printf("Missing Authorization header")
 			http.Error(w, "Authorization header required", http.StatusUnauthorized)
 			return
 		}
 
-		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-			return []byte("your-secret-key"), nil
-		})
+		bearerToken := strings.Split(authHeader, " ")
+		if len(bearerToken) != 2 {
+			log.Printf("Invalid token format")
+			http.Error(w, "Invalid token format", http.StatusUnauthorized)
+			return
+		}
 
-		if err != nil || !token.Valid {
+		claims, err := utils.ValidateToken(bearerToken[1])
+		if err != nil {
+			log.Printf("Token validation failed: %v", err)
 			http.Error(w, "Invalid token", http.StatusUnauthorized)
 			return
 		}
 
-		// Сохраняем claims в контексте
-		claims, ok := token.Claims.(jwt.MapClaims)
-		if !ok {
-			http.Error(w, "Invalid token claims", http.StatusUnauthorized)
-			return
-		}
-
-		ctx := context.WithValue(r.Context(), userContextKey, claims)
+		log.Printf("User authenticated: ID=%d, Role=%s", claims.UserID, claims.Role)
+		ctx := utils.ContextWithUser(r.Context(), claims)
 		next.ServeHTTP(w, r.WithContext(ctx))
-	})
+	}
 }
 
-// В AdminOnly можно получать данные так:
-func AdminOnly(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		claims, ok := r.Context().Value(userContextKey).(jwt.MapClaims)
-		if !ok || claims["role"] != "admin" {
-			http.Error(w, "Forbidden", http.StatusForbidden)
+func AdminOnly(next http.HandlerFunc) http.HandlerFunc {
+	return AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
+		claims := utils.UserFromContext(r.Context())
+		if claims.Role != "admin" {
+			http.Error(w, "Admin access required", http.StatusForbidden)
 			return
 		}
 		next.ServeHTTP(w, r)
 	})
 }
+
+func TeacherOrAdmin(next http.HandlerFunc) http.HandlerFunc {
+	return AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
+		claims := utils.UserFromContext(r.Context())
+		log.Printf("TeacherOrAdmin middleware: User role is %s", claims.Role)
+		if claims.Role != "teacher" && claims.Role != "admin" {
+			log.Printf("Access denied: User %d with role %s tried to access teacher/admin endpoint", 
+				claims.UserID, claims.Role)
+			http.Error(w, "Teacher or admin access required", http.StatusForbidden)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+} 

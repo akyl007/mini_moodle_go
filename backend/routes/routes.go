@@ -24,6 +24,13 @@ func SetupRouter() *mux.Router {
 	router.HandleFunc("/api/course", middleware.TeacherOrAdmin(handlers.UpdateCourse)).Methods("PUT")
 	router.HandleFunc("/api/course", middleware.TeacherOrAdmin(handlers.DeleteCourse)).Methods("DELETE")
 
+	// Обновленные маршруты для назначения
+	router.HandleFunc("/api/course/assign-teacher", middleware.TeacherOrAdmin(handlers.AssignTeacher)).Methods("POST")
+	router.HandleFunc("/api/course/assign-students", middleware.TeacherOrAdmin(handlers.AssignStudents)).Methods("POST")
+	
+	// Новый маршрут для посещаемости
+	router.HandleFunc("/api/lesson/attendance", middleware.TeacherOrAdmin(handlers.UpdateAttendance)).Methods("POST")
+
 	// Маршруты для всех аутентифицированных пользователей
 	router.HandleFunc("/api/teachers", middleware.AuthMiddleware(handlers.GetTeachers)).Methods("GET")
 	router.HandleFunc("/api/students", middleware.AuthMiddleware(handlers.GetStudents)).Methods("GET")

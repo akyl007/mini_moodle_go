@@ -13,7 +13,15 @@ CREATE TABLE courses (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     description TEXT,
+    teacher_id INTEGER REFERENCES users(id),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Новая таблица для связи курсов и студентов
+CREATE TABLE course_students (
+    course_id INTEGER REFERENCES courses(id) ON DELETE CASCADE,
+    student_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    PRIMARY KEY (course_id, student_id)
 );
 
 CREATE TABLE lessons (
@@ -21,18 +29,21 @@ CREATE TABLE lessons (
     course_id INTEGER REFERENCES courses(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     description TEXT,
-    teacher_id INTEGER REFERENCES users(id),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE lesson_students (
+-- Переименовываем lesson_students в lesson_attendance и добавляем поле attendance
+CREATE TABLE lesson_attendance (
     lesson_id INTEGER REFERENCES lessons(id) ON DELETE CASCADE,
     student_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    attendance BOOLEAN DEFAULT false,
     grade INTEGER,
     PRIMARY KEY (lesson_id, student_id)
 );
 
--- Добавляем индексы для оптимизации запросов прогресса
-CREATE INDEX idx_lesson_students_student_id ON lesson_students(student_id);
-CREATE INDEX idx_lesson_students_lesson_id ON lesson_students(lesson_id);
-CREATE INDEX idx_lessons_course_id ON lessons(course_id); 
+-- Добавляем индексы для оптимизации запросов
+CREATE INDEX idx_lesson_attendance_student_id ON lesson_attendance(student_id);
+CREATE INDEX idx_lesson_attendance_lesson_id ON lesson_attendance(lesson_id);
+CREATE INDEX idx_lessons_course_id ON lessons(course_id);
+CREATE INDEX idx_course_students_student_id ON course_students(student_id);
+CREATE INDEX idx_course_students_course_id ON course_students(course_id); 

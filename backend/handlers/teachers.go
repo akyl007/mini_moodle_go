@@ -30,21 +30,28 @@ func GetTeachers(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(teachers)
 }
 
-// AssignTeacher назначает преподавателя на урок
-type AssignTeacherRequest struct {
-	LessonID  int `json:"lesson_id"`
-	TeacherID int `json:"teacher_id"`
-}
-
+// AssignTeacher теперь назначает преподавателя к курсу
 func AssignTeacher(w http.ResponseWriter, r *http.Request) {
-	var req AssignTeacherRequest
+	var req struct {
+		CourseID  int `json:"course_id"`
+		TeacherID int `json:"teacher_id"`
+	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Неверный запрос", http.StatusBadRequest)
 		return
 	}
 
-	_, err := db.DB.Exec("UPDATE lessons SET teacher_id = $1 WHERE id = $2",
-		req.TeacherID, req.LessonID)
+	// Проверяем существование курса и преподавателя
+	var exists bool
+	err := db.DB.QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE id = $1 AND role = 'teacher')", 
+		req.TeacherID).Scan(&exists)
+	if err != nil || !exists {
+		http.Error(w, "Преподаватель не найден", http.StatusNotFound)
+		return
+	}
+
+	_, err = db.DB.Exec("UPDATE courses SET teacher_id = $1 WHERE id = $2",
+		req.TeacherID, req.CourseID)
 	if err != nil {
 		http.Error(w, "Ошибка назначения преподавателя", http.StatusInternalServerError)
 		return

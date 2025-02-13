@@ -1,16 +1,15 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Детали урока</title>
-  <link rel="stylesheet" href="./react_frontend/src/styles.css">
+  <title>Mini Moodle - Детали урока</title>
+  <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-
 <header>
   <div class="header-left">
-    <div class="menu-toggle" onclick="toggleSidebar()">☰</div>
+    <div class="menu-toggle" id="menu-toggle">☰</div>
     <div class="logo"><a href="index.html">Mini Moodle</a></div>
   </div>
   <nav>
@@ -35,6 +34,7 @@
   <p id="lesson-teacher"></p>
 </div>
 
-<script src="lesson.js"></script>
+<script type="module" src="./api.js"></script>
+<script type="module" src="./lesson.js"></script>
 </body>
 </html>

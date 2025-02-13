@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mini Moodle - Профиль</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<header>
+  <div class="header-left">
+    <div class="menu-toggle" id="menu-toggle">☰</div>
+    <div class="logo">Mini Moodle</div>
+  </div>
+  <nav class="header-nav">
+    <ul>
+      <li><a href="index.html">Главная</a></li>
+      <li><a href="#" id="logout-link">Выход</a></li>
+    </ul>
+  </nav>
+</header>
+
+<div class="sidebar" id="sidebar">
+  <h2>Навигация</h2>
+  <ul>
+    <li><a href="index.html">Все уроки</a></li>
+  </ul>
+</div>
+
+<div class="main-content">
+  <h1>Профиль пользователя</h1>
+  <div id="profile-info"></div>
+</div>
+
+<script type="module" src="api.js"></script>
+<script type="module" src="profile.js"></script>
+</body>
+</html>

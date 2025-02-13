@@ -239,3 +239,14 @@ nav ul li a:hover {
 .assign-student-btn:hover {
     background-color: #218838;
 }
+
+.lesson-card {
+    cursor:pointer;
+    transition: transform 0.2s ease;
+    margin: 10px 0;
+}
+
+.lesson-card:hover {
+    transform: scale(1.02);
+    background-color: #f0f0f0
+}

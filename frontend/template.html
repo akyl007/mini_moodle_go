@@ -3,12 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mini Moodle - Главная</title>
+    <title>Mini Moodle</title>
     <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
+<!-- Затемнение для бокового меню -->
+<div class="overlay" id="overlay"></div>
+
+<!-- Header -->
 <header>
     <div class="header-left">
+        <!-- Вместо inline onclick, добавим id для навешивания обработчика -->
         <div class="menu-toggle" id="menu-toggle">☰</div>
         <div class="logo">Mini Moodle</div>
     </div>
@@ -17,10 +22,13 @@
             <li><a href="index.html">Главная</a></li>
             <li><a href="#">Профиль</a></li>
             <li><a href="#">Выход</a></li>
+            <!-- Если потребуется для неавторизованных пользователей -->
+            <li><a href="login.html">Войти</a></li>
         </ul>
     </nav>
 </header>
 
+<!-- Боковая панель -->
 <div class="sidebar" id="sidebar">
     <h2>Навигация</h2>
     <ul>
@@ -30,11 +38,12 @@
     </ul>
 </div>
 
-<div class="main-content">
-    <h1>Список уроков</h1>
-    <div id="lessons-container"></div>
+<!-- Основной контент -->
+<div class="main-content" id="main-content">
+    <!-- Здесь будет меняться контент в зависимости от страницы -->
 </div>
 
+<!-- Модальные окна для назначения -->
 <div id="assignTeacherModal" class="modal">
     <div class="modal-content">
         <span class="close" id="assignTeacherClose">&times;</span>
@@ -55,7 +64,9 @@
     </div>
 </div>
 
-<script type="module" src="./api.js"></script>
-<script type="module" src="./index.js"></script>
+<!-- Подключаем общий модуль API -->
+<script src="api.js"></script>
+<!-- Здесь можно подключить общую логику для шаблона (например, навешивание обработчиков для меню) -->
+<script src="template.js"></script>
 </body>
 </html>

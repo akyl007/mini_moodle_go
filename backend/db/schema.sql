@@ -17,7 +17,7 @@ CREATE TABLE courses (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Новая таблица для связи курсов и студентов
+
 CREATE TABLE course_students (
     course_id INTEGER REFERENCES courses(id) ON DELETE CASCADE,
     student_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
@@ -33,7 +33,6 @@ CREATE TABLE lessons (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Переименовываем lesson_students в lesson_attendance и добавляем поле attendance
 CREATE TABLE lesson_attendance (
     lesson_id INTEGER REFERENCES lessons(id) ON DELETE CASCADE,
     student_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
@@ -42,12 +41,27 @@ CREATE TABLE lesson_attendance (
     PRIMARY KEY (lesson_id, student_id)
 );
 
--- Добавляем индексы для оптимизации запросов
 CREATE INDEX idx_lesson_attendance_student_id ON lesson_attendance(student_id);
 CREATE INDEX idx_lesson_attendance_lesson_id ON lesson_attendance(lesson_id);
 CREATE INDEX idx_lessons_course_id ON lessons(course_id);
 CREATE INDEX idx_course_students_student_id ON course_students(student_id);
 CREATE INDEX idx_course_students_course_id ON course_students(course_id);
 
--- Добавляем индекс для оптимизации запросов с teacher_id
-CREATE INDEX idx_lessons_teacher_id ON lessons(teacher_id); 
+
+CREATE INDEX idx_lessons_teacher_id ON lessons(teacher_id);
+
+CREATE TABLE feedback (
+    id SERIAL PRIMARY KEY,
+    course_id INTEGER REFERENCES courses(id) ON DELETE CASCADE,
+    student_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    teacher_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    comment TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_course FOREIGN KEY (course_id) REFERENCES courses(id),
+    CONSTRAINT fk_student FOREIGN KEY (student_id) REFERENCES users(id),
+    CONSTRAINT fk_teacher FOREIGN KEY (teacher_id) REFERENCES users(id)
+);
+
+CREATE INDEX idx_feedback_course_id ON feedback(course_id);
+CREATE INDEX idx_feedback_student_id ON feedback(student_id);
+CREATE INDEX idx_feedback_teacher_id ON feedback(teacher_id); 

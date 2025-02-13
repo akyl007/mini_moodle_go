@@ -7,7 +7,6 @@ import (
 	"net/http"
 )
 
-// GetTeachers возвращает список всех преподавателей
 func GetTeachers(w http.ResponseWriter, r *http.Request) {
 	rows, err := db.DB.Query("SELECT id, username FROM users WHERE role = 'teacher'")
 	if err != nil {
@@ -30,7 +29,6 @@ func GetTeachers(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(teachers)
 }
 
-// AssignTeacher теперь назначает преподавателя к курсу
 func AssignTeacher(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		CourseID  int `json:"course_id"`
@@ -41,7 +39,6 @@ func AssignTeacher(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Проверяем существование курса и преподавателя
 	var exists bool
 	err := db.DB.QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE id = $1 AND role = 'teacher')", 
 		req.TeacherID).Scan(&exists)

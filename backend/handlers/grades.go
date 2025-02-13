@@ -19,7 +19,6 @@ func AssignGrade(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Проверяем, что оценка в допустимом диапазоне (например, от 0 до 100)
 	if req.Grade < 0 || req.Grade > 100 {
 		http.Error(w, "Grade must be between 0 and 100", http.StatusBadRequest)
 		return

@@ -9,7 +9,6 @@ import (
 	"net/http"
 )
 
-// GetStudentProgress возвращает прогресс студента по всем курсам
 func GetStudentProgress(w http.ResponseWriter, r *http.Request) {
 	claims := utils.UserFromContext(r.Context())
 	studentID := claims.UserID
@@ -65,7 +64,6 @@ func GetStudentProgress(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(progress)
 }
 
-// GetCourseProgress возвращает общий прогресс по курсу
 func GetCourseProgress(w http.ResponseWriter, r *http.Request) {
 	courseID := r.URL.Query().Get("course_id")
 	if courseID == "" {

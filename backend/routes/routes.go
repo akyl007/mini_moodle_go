@@ -28,7 +28,7 @@ func SetupRouter() *mux.Router {
 	router.HandleFunc("/api/course/assign-teacher", middleware.TeacherOrAdmin(handlers.AssignTeacher)).Methods("POST")
 	router.HandleFunc("/api/course/assign-students", middleware.TeacherOrAdmin(handlers.AssignStudents)).Methods("POST")
 	
-	// Новый маршрут для посещаемости
+	// Маршрут для посещаемости
 	router.HandleFunc("/api/lesson/attendance", middleware.TeacherOrAdmin(handlers.UpdateAttendance)).Methods("POST")
 
 	// Маршруты для всех аутентифицированных пользователей
@@ -39,6 +39,10 @@ func SetupRouter() *mux.Router {
 	router.HandleFunc("/api/lesson", middleware.AuthMiddleware(handlers.GetLesson)).Methods("GET")
 	router.HandleFunc("/api/progress/student", middleware.AuthMiddleware(handlers.GetStudentProgress)).Methods("GET")
 	router.HandleFunc("/api/progress/course", middleware.TeacherOrAdmin(handlers.GetCourseProgress)).Methods("GET")
+	router.HandleFunc("/api/courses/{id}", handlers.GetCourse).Methods("GET")
+
+	// Feedback route
+	router.HandleFunc("/api/feedback", middleware.AuthMiddleware(handlers.CreateFeedback)).Methods("POST")
 
 	router.Use(mux.CORSMethodMiddleware(router))
 

@@ -68,14 +68,14 @@ func Register(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("Registering user: %s with role: %s", req.Username, req.Role)
 
-	// Проверяем допустимость роли
+
 	if req.Role != "admin" && req.Role != "teacher" && req.Role != "student" {
 		log.Printf("Invalid role: %s", req.Role)
 		http.Error(w, "Invalid role", http.StatusBadRequest)
 		return
 	}
 
-	// Хешируем пароль
+
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
 		log.Printf("Error hashing password: %v", err)
@@ -83,7 +83,6 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Создаем пользователя
 	var userID int
 	err = db.DB.QueryRow(
 		"INSERT INTO users (username, password, role) VALUES ($1, $2, $3::user_role) RETURNING id",

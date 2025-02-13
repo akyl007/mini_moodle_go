@@ -7,7 +7,6 @@ import (
 	"net/http"
 )
 
-// GetStudents возвращает список всех студентов
 func GetStudents(w http.ResponseWriter, r *http.Request) {
 	rows, err := db.DB.Query("SELECT id, username FROM users WHERE role = 'student'")
 	if err != nil {
@@ -30,7 +29,6 @@ func GetStudents(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(students)
 }
 
-// AssignStudents теперь назначает студентов к курсу
 func AssignStudents(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		CourseID   int   `json:"course_id"`
@@ -69,7 +67,6 @@ func AssignStudents(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"message": "Students assigned successfully"})
 }
 
-// UpdateAttendance обновляет посещаемость урока
 func UpdateAttendance(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		LessonID  int  `json:"lesson_id"`

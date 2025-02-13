@@ -23,7 +23,7 @@ func DeleteLesson(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Сначала удаляем связи в таблице lesson_students
+
 	_, err = db.DB.Exec("DELETE FROM lesson_students WHERE lesson_id = $1", id)
 	if err != nil {
 		http.Error(w, "Ошибка удаления связей урока", http.StatusInternalServerError)
@@ -51,12 +51,30 @@ func DeleteLesson(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"message": "Урок успешно удален"})
 }
 
-// GetLessons возвращает список всех уроков
+
 func GetLessons(w http.ResponseWriter, r *http.Request) {
-	rows, err := db.DB.Query("SELECT id, name, description, course_id, teacher_id FROM lessons")
+	courseID := r.URL.Query().Get("course_id")
+	if courseID == "" {
+		http.Error(w, "Course ID is required", http.StatusBadRequest)
+		return
+	}
+
+
+	query := `
+		SELECT 
+			l.id,
+			l.name,
+			l.description,
+			l.course_id
+		FROM lessons l
+		WHERE l.course_id = $1
+		ORDER BY l.id
+	`
+
+	rows, err := db.DB.Query(query, courseID)
 	if err != nil {
 		log.Printf("Error querying lessons: %v", err)
-		http.Error(w, "Ошибка загрузки уроков", http.StatusInternalServerError)
+		http.Error(w, "Error loading lessons", http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
@@ -64,25 +82,33 @@ func GetLessons(w http.ResponseWriter, r *http.Request) {
 	var lessons []models.Lesson
 	for rows.Next() {
 		var lesson models.Lesson
-		var teacherID sql.NullInt64
-		if err := rows.Scan(&lesson.ID, &lesson.Name, &lesson.Description, &lesson.CourseID, &teacherID); err != nil {
+		err := rows.Scan(
+			&lesson.ID,
+			&lesson.Name,
+			&lesson.Description,
+			&lesson.CourseID,
+		)
+
+		if err != nil {
 			log.Printf("Error scanning lesson: %v", err)
-			http.Error(w, "Ошибка обработки данных", http.StatusInternalServerError)
+			http.Error(w, "Error processing lesson data", http.StatusInternalServerError)
 			return
 		}
-		if teacherID.Valid {
-			tID := int(teacherID.Int64)
-			lesson.TeacherID = &tID
-		}
-		log.Printf("Loaded lesson: %+v", lesson)
+
 		lessons = append(lessons, lesson)
+	}
+
+	if err = rows.Err(); err != nil {
+		log.Printf("Error iterating lessons: %v", err)
+		http.Error(w, "Error processing lessons", http.StatusInternalServerError)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(lessons)
 }
 
-// GetLesson возвращает информацию об одном уроке по ID
+
 func GetLesson(w http.ResponseWriter, r *http.Request) {
 	idStr := r.URL.Query().Get("id")
 	if idStr == "" {
@@ -98,28 +124,51 @@ func GetLesson(w http.ResponseWriter, r *http.Request) {
 
 	var lesson models.Lesson
 	var teacherID sql.NullInt64
+	var teacherUsername sql.NullString
 
-	err = db.DB.QueryRow("SELECT id, name, description, course_id, teacher_id FROM lessons WHERE id = $1", id).
-		Scan(&lesson.ID, &lesson.Name, &lesson.Description, &lesson.CourseID, &teacherID)
+	err = db.DB.QueryRow(`
+		SELECT 
+			l.id, 
+			l.name, 
+			l.description, 
+			l.course_id,
+			l.teacher_id,
+			u.username as teacher_username
+		FROM lessons l
+		LEFT JOIN users u ON l.teacher_id = u.id AND u.role = 'teacher'
+		WHERE l.id = $1
+	`, id).Scan(
+		&lesson.ID,
+		&lesson.Name,
+		&lesson.Description,
+		&lesson.CourseID,
+		&teacherID,
+		&teacherUsername,
+	)
 
 	if err == sql.ErrNoRows {
 		http.Error(w, "Урок не найден", http.StatusNotFound)
 		return
 	} else if err != nil {
+		log.Printf("Error querying lesson: %v", err)
 		http.Error(w, "Ошибка получения урока", http.StatusInternalServerError)
 		return
 	}
 
-	if teacherID.Valid {
+
+	if teacherID.Valid && teacherUsername.Valid {
 		tID := int(teacherID.Int64)
 		lesson.TeacherID = &tID
+		lesson.Teacher = &models.Teacher{
+			ID:       tID,
+			Username: teacherUsername.String,
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(lesson)
 }
 
-// GetLessonWithStudents возвращает информацию об уроке со списком студентов
 func GetLessonWithStudents(w http.ResponseWriter, r *http.Request) {
 	idStr := r.URL.Query().Get("id")
 	if idStr == "" {
@@ -137,7 +186,6 @@ func GetLessonWithStudents(w http.ResponseWriter, r *http.Request) {
 	var teacherID sql.NullInt64
 	var teacherUsername sql.NullString
 
-	// Получаем информацию об уроке и преподавателе
 	err = db.DB.QueryRow(`
 		SELECT l.id, l.name, l.description, l.teacher_id,
 			   t.username
@@ -166,7 +214,6 @@ func GetLessonWithStudents(w http.ResponseWriter, r *http.Request) {
 		lesson.TeacherID = &tID
 	}
 
-	// Получаем список назначенных студентов
 	rows, err := db.DB.Query(`
 		SELECT 
 			u.id, 
@@ -201,7 +248,6 @@ func GetLessonWithStudents(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(lesson)
 }
 
-// CreateLesson создает новый урок для курса
 func CreateLesson(w http.ResponseWriter, r *http.Request) {
 	var lesson models.Lesson
 	if err := json.NewDecoder(r.Body).Decode(&lesson); err != nil {
@@ -212,7 +258,7 @@ func CreateLesson(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("Creating lesson: %+v", lesson)
 
-	// Проверяем существование курса
+	
 	var courseExists bool
 	err := db.DB.QueryRow("SELECT EXISTS(SELECT 1 FROM courses WHERE id = $1)", lesson.CourseID).Scan(&courseExists)
 	if err != nil {
@@ -226,7 +272,7 @@ func CreateLesson(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Проверяем существование преподавателя, если он указан
+
 	if lesson.TeacherID != nil {
 		var teacherExists bool
 		err := db.DB.QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE id = $1 AND role = 'teacher')", *lesson.TeacherID).Scan(&teacherExists)
@@ -242,7 +288,6 @@ func CreateLesson(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Создаем урок
 	err = db.DB.QueryRow(`
 		INSERT INTO lessons (name, description, course_id, teacher_id)
 		VALUES ($1, $2, $3, $4)
@@ -262,7 +307,6 @@ func CreateLesson(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(lesson)
 }
 
-// GetLessonsByCourse возвращает все уроки для конкретного курса
 func GetLessonsByCourse(w http.ResponseWriter, r *http.Request) {
 	courseID := r.URL.Query().Get("course_id")
 	if courseID == "" {

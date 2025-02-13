@@ -11,7 +11,6 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// CreateCourse создает новый курс
 func CreateCourse(w http.ResponseWriter, r *http.Request) {
 	var course models.Course
 	if err := json.NewDecoder(r.Body).Decode(&course); err != nil {
@@ -22,7 +21,7 @@ func CreateCourse(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("Creating course: %+v", course)
 
-	// Проверяем, существует ли преподаватель
+
 	if course.TeacherID != nil {
 		var exists bool
 		err := db.DB.QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE id = $1 AND role = 'teacher')", *course.TeacherID).Scan(&exists)
@@ -38,7 +37,7 @@ func CreateCourse(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Проверяем, что таблица courses существует
+
 	var tableExists bool
 	err := db.DB.QueryRow(`
         SELECT EXISTS (
@@ -89,7 +88,6 @@ func CreateCourse(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(course)
 }
 
-// GetCourses возвращает список всех курсов
 func GetCourses(w http.ResponseWriter, r *http.Request) {
 	rows, err := db.DB.Query(`
         SELECT c.id, c.name, c.description, c.teacher_id,
@@ -134,7 +132,6 @@ func GetCourses(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(courses)
 }
 
-// UpdateCourse обновляет информацию о курсе
 func UpdateCourse(w http.ResponseWriter, r *http.Request) {
 	idStr := r.URL.Query().Get("id")
 	if idStr == "" {
@@ -155,7 +152,6 @@ func UpdateCourse(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Проверяем существование курса
 	var exists bool
 	err = db.DB.QueryRow("SELECT EXISTS(SELECT 1 FROM courses WHERE id = $1)", id).Scan(&exists)
 	if err != nil {
@@ -168,7 +164,7 @@ func UpdateCourse(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Проверяем существование преподавателя
+
 	if course.TeacherID != nil {
 		err = db.DB.QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE id = $1 AND role = 'teacher')", *course.TeacherID).Scan(&exists)
 		if err != nil {
@@ -205,7 +201,6 @@ func UpdateCourse(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Получаем обновленный курс
 	var updatedCourse models.CourseWithTeacher
 	err = db.DB.QueryRow(`
         SELECT c.id, c.name, c.description, c.teacher_id,
@@ -232,7 +227,6 @@ func UpdateCourse(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(updatedCourse)
 }
 
-// DeleteCourse удаляет курс
 func DeleteCourse(w http.ResponseWriter, r *http.Request) {
 	idStr := r.URL.Query().Get("id")
 	if idStr == "" {
@@ -252,7 +246,6 @@ func DeleteCourse(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Удаляем связанные уроки и их связи со студентами
 	_, err = tx.Exec("DELETE FROM lesson_students WHERE lesson_id IN (SELECT id FROM lessons WHERE course_id = $1)", id)
 	if err != nil {
 		tx.Rollback()
@@ -294,18 +287,16 @@ func DeleteCourse(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"message": "Course deleted successfully"})
 }
 
-// GetCourse возвращает информацию о конкретном курсе
+
 func GetCourse(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	courseID := vars["id"]
 
-	// Проверяем, что ID курса предоставлен
 	if courseID == "" {
 		http.Error(w, "Course ID is required", http.StatusBadRequest)
 		return
 	}
 
-	// Получаем информацию о курсе, преподавателе и студентах
 	query := `
         SELECT 
             c.id, 
@@ -355,7 +346,6 @@ func GetCourse(w http.ResponseWriter, r *http.Request) {
 		course.TeacherName = &teacherName.String
 	}
 
-	// Получаем список студентов курса
 	studentsQuery := `
         SELECT u.id, u.username
         FROM users u

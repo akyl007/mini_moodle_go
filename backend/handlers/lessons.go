@@ -23,7 +23,7 @@ func DeleteLesson(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Сначала удаляем связи в таблице lesson_students
+
 	_, err = db.DB.Exec("DELETE FROM lesson_students WHERE lesson_id = $1", id)
 	if err != nil {
 		http.Error(w, "Ошибка удаления связей урока", http.StatusInternalServerError)
@@ -51,7 +51,7 @@ func DeleteLesson(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"message": "Урок успешно удален"})
 }
 
-// GetLessons возвращает список уроков для конкретного курса
+
 func GetLessons(w http.ResponseWriter, r *http.Request) {
 	courseID := r.URL.Query().Get("course_id")
 	if courseID == "" {
@@ -59,7 +59,7 @@ func GetLessons(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Обновленный запрос без teacher_id
+
 	query := `
 		SELECT 
 			l.id,
@@ -108,7 +108,7 @@ func GetLessons(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(lessons)
 }
 
-// GetLesson возвращает информацию об одном уроке по ID
+
 func GetLesson(w http.ResponseWriter, r *http.Request) {
 	idStr := r.URL.Query().Get("id")
 	if idStr == "" {
@@ -126,7 +126,6 @@ func GetLesson(w http.ResponseWriter, r *http.Request) {
 	var teacherID sql.NullInt64
 	var teacherUsername sql.NullString
 
-	// Обновляем SQL запрос для правильного получения данных урока
 	err = db.DB.QueryRow(`
 		SELECT 
 			l.id, 
@@ -156,7 +155,7 @@ func GetLesson(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Если у урока есть преподаватель, добавляем его данные
+
 	if teacherID.Valid && teacherUsername.Valid {
 		tID := int(teacherID.Int64)
 		lesson.TeacherID = &tID
@@ -170,7 +169,6 @@ func GetLesson(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(lesson)
 }
 
-// GetLessonWithStudents возвращает информацию об уроке со списком студентов
 func GetLessonWithStudents(w http.ResponseWriter, r *http.Request) {
 	idStr := r.URL.Query().Get("id")
 	if idStr == "" {
@@ -188,7 +186,6 @@ func GetLessonWithStudents(w http.ResponseWriter, r *http.Request) {
 	var teacherID sql.NullInt64
 	var teacherUsername sql.NullString
 
-	// Получаем информацию об уроке и преподавателе
 	err = db.DB.QueryRow(`
 		SELECT l.id, l.name, l.description, l.teacher_id,
 			   t.username
@@ -217,7 +214,6 @@ func GetLessonWithStudents(w http.ResponseWriter, r *http.Request) {
 		lesson.TeacherID = &tID
 	}
 
-	// Получаем список назначенных студентов
 	rows, err := db.DB.Query(`
 		SELECT 
 			u.id, 
@@ -252,7 +248,6 @@ func GetLessonWithStudents(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(lesson)
 }
 
-// CreateLesson создает новый урок для курса
 func CreateLesson(w http.ResponseWriter, r *http.Request) {
 	var lesson models.Lesson
 	if err := json.NewDecoder(r.Body).Decode(&lesson); err != nil {
@@ -263,7 +258,7 @@ func CreateLesson(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("Creating lesson: %+v", lesson)
 
-	// Проверяем существование курса
+	
 	var courseExists bool
 	err := db.DB.QueryRow("SELECT EXISTS(SELECT 1 FROM courses WHERE id = $1)", lesson.CourseID).Scan(&courseExists)
 	if err != nil {
@@ -277,7 +272,7 @@ func CreateLesson(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Проверяем существование преподавателя, если он указан
+
 	if lesson.TeacherID != nil {
 		var teacherExists bool
 		err := db.DB.QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE id = $1 AND role = 'teacher')", *lesson.TeacherID).Scan(&teacherExists)
@@ -293,7 +288,6 @@ func CreateLesson(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Создаем урок
 	err = db.DB.QueryRow(`
 		INSERT INTO lessons (name, description, course_id, teacher_id)
 		VALUES ($1, $2, $3, $4)
@@ -313,7 +307,6 @@ func CreateLesson(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(lesson)
 }
 
-// GetLessonsByCourse возвращает все уроки для конкретного курса
 func GetLessonsByCourse(w http.ResponseWriter, r *http.Request) {
 	courseID := r.URL.Query().Get("course_id")
 	if courseID == "" {

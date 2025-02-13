@@ -44,6 +44,11 @@ func SetupRouter() *mux.Router {
 	// Feedback route
 	router.HandleFunc("/api/feedback", middleware.AuthMiddleware(handlers.CreateFeedback)).Methods("POST")
 
+	// Маршруты для форума (доступны всем аутентифицированным пользователям)
+	router.HandleFunc("/api/forum/messages", middleware.AuthMiddleware(handlers.GetForumMessages)).Methods("GET")
+	router.HandleFunc("/api/forum/message", middleware.AuthMiddleware(handlers.CreateForumMessage)).Methods("POST")
+	router.HandleFunc("/api/forum/message", middleware.AuthMiddleware(handlers.DeleteForumMessage)).Methods("DELETE")
+
 	router.Use(mux.CORSMethodMiddleware(router))
 
 	return router

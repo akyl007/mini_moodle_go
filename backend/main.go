@@ -10,21 +10,21 @@ import (
 )
 
 func main() {
-	// Загружаем конфигурацию
+	// Загрузка конфигурации
 	if err := config.LoadConfig("config/config.json"); err != nil {
 		log.Fatal("Cannot load config:", err)
 	}
 
-	// Подключаемся к базе данных
+	// База данных
 	if err := db.Connect(); err != nil {
 		log.Fatal("Cannot connect to database:", err)
 	}
 	defer db.DB.Close()
 
-	// Настраиваем маршрутизацию
+	// Маршрутизация
 	router := routes.SetupRouter()
 
-	// Настраиваем CORS
+	// CORS
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
@@ -38,7 +38,7 @@ func main() {
 		router.ServeHTTP(w, r)
 	})
 
-	// Запускаем сервер
+	// Сервер
 	serverAddr := fmt.Sprintf(":%d", config.AppConfig.Server.Port)
 	log.Printf("Server starting on http://localhost%s", serverAddr)
 	log.Fatal(http.ListenAndServe(serverAddr, handler))

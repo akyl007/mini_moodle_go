@@ -52,4 +52,4 @@ func TestLogin(t *testing.T) {
 			t.Errorf("Expected status code %d, got %d", http.StatusUnauthorized, w.Code)
 		}
 	})
-} 
+}

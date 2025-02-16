@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mini Moodle – Детали урока</title>
+  <link rel="stylesheet" href="./styles.css">
+  <style>
+    /* Дополнительные стили для модального окна */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal-content {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      position: relative;
+    }
+    .modal-content .close {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 24px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .assign-btn {
+      background-color: #6c63ff;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      padding: 10px 16px;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: background-color 0.3s ease;
+    }
+    .assign-btn:hover {
+      background-color: #5750d1;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="header-left">
+    <div class="menu-toggle" id="menu-toggle">☰</div>
+    <div class="logo"><a href="index.html">Mini Moodle</a></div>
+  </div>
+  <nav class="header-nav">
+    <ul>
+      <li><a href="index.html">Главная</a></li>
+      <li><a href="profile.html">Профиль</a></li>
+      <li><a href="login.html">Логин</a></li>
+      <li><a href="register_student.html">Регистрация</a></li>
+      <li><a href="#" id="logout-link">Выход</a></li>
+    </ul>
+  </nav>
+</header>
+
+<div class="sidebar" id="sidebar">
+  <h2>Навигация</h2>
+  <ul>
+    <li><a href="index.html">Все уроки</a></li>
+  </ul>
+</div>
+
+<div class="main-content">
+  <h1 id="lesson-title">Загрузка...</h1>
+  <p id="lesson-description"></p>
+  <p id="lesson-teacher"></p>
+</div>
+
+<!-- Модальное окно для назначения преподавателя -->
+<div id="assignTeacherModal" class="modal" style="display: none;">
+  <div class="modal-content">
+    <span class="close" id="assignTeacherClose">&times;</span>
+    <h2>Назначить преподавателя</h2>
+    <label for="teacherSelect">Выберите преподавателя:</label>
+    <select id="teacherSelect"></select>
+    <button class="assign-btn" id="assignTeacherBtn">Назначить</button>
+  </div>
+</div>
+
+<script type="module" src="./api.js"></script>
+<script type="module" src="./auth.js"></script>
+<script type="module" src="./logout.js"></script>
+<script type="module" src="./lesson.js"></script>
+</body>
+</html>

@@ -3,12 +3,12 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
+	"github.com/gorilla/mux"
 	"log"
 	"mini_moodle/backend/db"
 	"mini_moodle/backend/models"
 	"net/http"
 	"strconv"
-	"github.com/gorilla/mux"
 )
 
 func CreateCourse(w http.ResponseWriter, r *http.Request) {
@@ -20,7 +20,6 @@ func CreateCourse(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Printf("Creating course: %+v", course)
-
 
 	if course.TeacherID != nil {
 		var exists bool
@@ -36,7 +35,6 @@ func CreateCourse(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-
 
 	var tableExists bool
 	err := db.DB.QueryRow(`
@@ -164,7 +162,6 @@ func UpdateCourse(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-
 	if course.TeacherID != nil {
 		err = db.DB.QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE id = $1 AND role = 'teacher')", *course.TeacherID).Scan(&exists)
 		if err != nil {
@@ -287,7 +284,6 @@ func DeleteCourse(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"message": "Course deleted successfully"})
 }
 
-
 func GetCourse(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	courseID := vars["id"]
@@ -352,7 +348,7 @@ func GetCourse(w http.ResponseWriter, r *http.Request) {
         JOIN course_students cs ON u.id = cs.student_id
         WHERE cs.course_id = $1
     `
-	
+
 	rows, err := db.DB.Query(studentsQuery, courseID)
 	if err != nil {
 		log.Printf("Error fetching students: %v", err)
@@ -373,9 +369,9 @@ func GetCourse(w http.ResponseWriter, r *http.Request) {
 
 	response := struct {
 		models.Course
-		TeacherName   *string         `json:"teacher_name,omitempty"`
-		StudentsCount int             `json:"students_count"`
-		LessonsCount  int            `json:"lessons_count"`
+		TeacherName   *string          `json:"teacher_name,omitempty"`
+		StudentsCount int              `json:"students_count"`
+		LessonsCount  int              `json:"lessons_count"`
 		Students      []models.Student `json:"students,omitempty"`
 	}{
 		Course:        course.Course,

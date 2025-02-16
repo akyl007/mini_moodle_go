@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <title>Mini Moodle – Уроки курса</title>
+    <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+<header>
+    <div class="header-left">
+        <div class="menu-toggle" id="menu-toggle">☰</div>
+        <div class="logo"><a href="index.html">Mini Moodle</a></div>
+    </div>
+    <nav class="header-nav">
+        <ul>
+            <li><a href="profile.html">Профиль</a></li>
+            <li><a href="login.html">Логин</a></li>
+            <li><a href="register_student.html">Регистрация</a></li>
+            <li><a href="#" id="logout-link">Выход</a></li>
+        </ul>
+    </nav>
+</header>
+
+<div class="sidebar" id="sidebar">
+    <h2>Навигация</h2>
+    <ul>
+        <li><a href="index.html">Все предметы</a></li>
+    </ul>
+</div>
+
+<div class="main-content">
+    <h1 id="course-title">Загрузка курса...</h1>
+    <p id="course-description"></p>
+    <button id="assignTeacherCourseBtn" class="assign-btn" style="display: none;">Назначить преподавателя</button>
+    <div id="lessons-container"></div>
+    <div id="notice" class="notice" style="display:none;"></div>
+</div>
+
+<!-- Модальное окно для назначения преподавателя на курс -->
+<div id="assignTeacherModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <span class="close" id="assignTeacherClose">&times;</span>
+        <h2>Назначить преподавателя и студентов на курс</h2>
+        <div>
+            <label for="teacherSelect">Выберите преподавателя:</label>
+            <select id="teacherSelect"></select>
+        </div>
+        <div style="margin-top: 20px;"> <hr/>  <h3>Назначение студентов</h3>
+            <label>Выберите студентов для назначения на курс:</label>
+            <div id="studentsCheckboxesContainer">
+            </div>
+            <label for="selectAllStudentsCheckbox">
+                <input type="checkbox" id="selectAllStudentsCheckbox"> Выбрать всех/Снять всех
+            </label>
+        </div>
+        <div style="margin-top: 20px; text-align: right;"> <button class="assign-btn" id="assignTeacherBtn">Назначить / Сохранить</button>
+            <button class="assign-btn" id="assignCancelBtn">Отменить</button> </div>
+    </div>
+</div>
+
+<script type="module" src="./api.js"></script>
+<script type="module" src="./auth.js"></script>
+<script type="module" src="./logout.js"></script>
+<script type="module" src="./course.js"></script>
+</body>
+</html>
